@@ -8,7 +8,7 @@ in the candidate set. This tells us the recall ceiling for Stage 2.
 Usage:
     python evaluate_blocking.py [--sample-size N]
 
-Run from the repository root (e:/amazon_ml_2026).
+Run from the repository root.
 """
 
 import csv
@@ -55,7 +55,9 @@ def main():
                         help='Batch size for similarity computation (default: 1000)')
     args = parser.parse_args()
 
-    data_dir = 'student_resource/dataset/train'
+    # UPDATED KAGGLE DATASET PATH HERE
+    data_dir = '/kaggle/input/datasets/sparshrastogicsv/amazon-ml-2026'
+    
     s1_file = os.path.join(data_dir, 'train_source1.tsv')
     s2_file = os.path.join(data_dir, 'train_source2.tsv')
     s3_file = os.path.join(data_dir, 'train_source3.tsv')
@@ -202,8 +204,8 @@ def main():
         for s1_id, missed in missed_examples:
             print(f"    {s1_id} missed: {missed}")
 
-    # Save results
-    results_file = 'blocking_eval_results.txt'
+    # Save results - writing to /kaggle/working/ so it saves correctly in Kaggle
+    results_file = '/kaggle/working/blocking_eval_results.txt'
     with open(results_file, 'w', encoding='utf-8') as f:
         f.write(f"Sample size: {args.sample_size}\n")
         f.write(f"Top-K name: {args.top_k_name}\n")
