@@ -39,9 +39,6 @@ def preprocess_text(text, is_name=True):
         text = " ".join(tokens)
     
     text = re.sub(r'[^\w\s]', ' ', text)
-    
-    if is_name:
-        text = NOISE_WORDS_REGEX.sub(' ', text)
         
     text = re.sub(r'\s+', ' ', text).strip()
     return text
