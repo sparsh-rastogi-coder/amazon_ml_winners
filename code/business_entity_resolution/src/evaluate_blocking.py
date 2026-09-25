@@ -181,7 +181,7 @@ def main():
 
         if not missed:
             perfect_recall_count += 1
-        elif len(missed_examples) < 5:
+        else:
             missed_examples.append((s1_id, missed))
 
     recall = total_found / total_true if total_true > 0 else 0
@@ -200,12 +200,44 @@ def main():
     print(f"  Total elapsed: {time.time()-t_start:.1f}s")
 
     if missed_examples:
-        print(f"\n  Sample of missed matches (for debugging):")
+        print(f"\n  Generating detailed report for all {len(missed_examples)} missed entities...")
+        needed_ids = set()
         for s1_id, missed in missed_examples:
-            print(f"    {s1_id} missed: {missed}")
+            needed_ids.add(s1_id)
+            needed_ids.update(missed)
+            
+        details = {}
+        for src_file in [s1_file, s2_file, s3_file]:
+            if not needed_ids: break
+            with open(src_file, 'r', encoding='utf-8') as f:
+                reader = csv.reader(f, delimiter='\t')
+                next(reader)
+                for row in reader:
+                    if len(row) >= 4 and row[0] in needed_ids:
+                        details[row[0]] = (row[1], row[2], row[3])
+                        needed_ids.remove(row[0])
+                        if not needed_ids: break
+
+        debug_file = '/kaggle/working/all_missed_blocking.txt' if 'kaggle' in data_dir else 'all_missed_blocking.txt'
+        with open(debug_file, 'w', encoding='utf-8') as f:
+            for s1_id, missed in missed_examples:
+                s1 = details.get(s1_id, ("","",""))
+                f.write(f"{'='*70}\n")
+                f.write(f"SOURCE:  {s1_id}\n")
+                f.write(f"  Name:    {s1[0]}\n")
+                f.write(f"  Address: {s1[1]}\n")
+                f.write(f"  Country: {s1[2]}\n")
+                for m_id in missed:
+                    m = details.get(m_id, ("","",""))
+                    f.write(f"\nMISSED:  {m_id}\n")
+                    f.write(f"  Name:    {m[0]}\n")
+                    f.write(f"  Address: {m[1]}\n")
+                    f.write(f"  Country: {m[2]}\n")
+                f.write("\n")
+        print(f"  Detailed missed examples saved to {debug_file}")
 
     # Save results - writing to /kaggle/working/ so it saves correctly in Kaggle
-    results_file = '/kaggle/working/blocking_eval_results.txt'
+    results_file = '/kaggle/working/blocking_eval_results.txt' if 'kaggle' in data_dir else 'blocking_eval_results.txt'
     with open(results_file, 'w', encoding='utf-8') as f:
         f.write(f"Sample size: {args.sample_size}\n")
         f.write(f"Top-K name: {args.top_k_name}\n")
