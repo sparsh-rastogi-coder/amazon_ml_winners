@@ -14,7 +14,6 @@ import gc
 import time
 import re
 import collections
-import unidecode
 import wordninja
 from sparse_dot_topn import awesome_cossim_topn
 
@@ -24,9 +23,9 @@ NOISE_WORDS_REGEX = re.compile(
 )
 
 def preprocess_text(text, is_name=True):
-    """Normalize text: transliterate to ASCII, split domain names, strip corporate noise."""
+    """Normalize text: split domain names."""
     if not text: return ""
-    text = unidecode.unidecode(str(text)).lower()
+    text = str(text).lower()
     
     if is_name:
         tokens = []
@@ -37,8 +36,6 @@ def preprocess_text(text, is_name=True):
             else:
                 tokens.append(word)
         text = " ".join(tokens)
-    
-    text = re.sub(r'[^\w\s]', ' ', text)
         
     text = re.sub(r'\s+', ' ', text).strip()
     return text
@@ -157,7 +154,37 @@ def run_blocking_for_country(s1_ids, s1_names, s1_addrs,
     del cand_addr_vecs, s1_addr_vecs, addr_vectorizer
     gc.collect()
 
-    # === Channel 3: Numeric Blocking Index (for heavy alias/missing text cases) ===
+    # === Channel 3: Combined Name+Address blocking ===
+    print(f"  [Comb] Fitting TF-IDF on {n_cand} candidates...")
+    t0 = time.time()
+    comb_vectorizer = TfidfVectorizer(
+        analyzer='char_wb', ngram_range=(3, 4),
+        max_features=80000, dtype=np.float32, sublinear_tf=True
+    )
+    cand_comb = [f"{n} {a}" for n, a in zip(cand_names, cand_addrs)]
+    cand_comb_vecs = comb_vectorizer.fit_transform(cand_comb)
+    del cand_comb
+    
+    s1_comb = [f"{n} {a}" for n, a in zip(s1_names, s1_addrs)]
+    s1_comb_vecs = comb_vectorizer.transform(s1_comb)
+    del s1_comb
+    print(f"  [Comb] TF-IDF shape: {cand_comb_vecs.shape} (took {time.time()-t0:.1f}s)")
+
+    print(f"  [Comb] Finding top-30 candidates...")
+    t0 = time.time()
+    for batch_start in range(0, n_s1, batch_size):
+        batch_end = min(batch_start + batch_size, n_s1)
+        s1_comb_batch = s1_comb_vecs[batch_start:batch_end]
+        sim = awesome_cossim_topn(s1_comb_batch, cand_comb_vecs.T, 30, 0.05)
+        for i in range(sim.shape[0]):
+            row = sim.getrow(i)
+            if row.nnz > 0:
+                candidates[s1_ids[batch_start + i]].update(row.indices.tolist())
+    print(f"  [Comb] Done ({time.time()-t0:.1f}s)")
+    del cand_comb_vecs, s1_comb_vecs, comb_vectorizer
+    gc.collect()
+
+    # === Channel 4: Numeric Blocking Index (for heavy alias/missing text cases) ===
     print(f"  [Num] Building numeric index for candidates...")
     t0 = time.time()
     cand_num_idx = collections.defaultdict(list)
