@@ -1,0 +1,20 @@
+# Ignore datasets and large data files
+student_resource/dataset/
+dataset/
+*.tsv
+*.csv
+*.log
+*.txt
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# IDE files
+.vscode/
+.idea/
+
+# Output directories
+output/
