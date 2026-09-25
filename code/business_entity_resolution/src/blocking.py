@@ -120,7 +120,7 @@ def run_blocking_for_country(s1_ids, s1_names, s1_addrs,
     for batch_start in range(0, n_s1, batch_size):
         batch_end = min(batch_start + batch_size, n_s1)
         s1_name_batch = s1_name_vecs[batch_start:batch_end]
-        sim = awesome_cossim_topn(s1_name_batch, cand_name_vecs.T, top_k_name, 0.05) # lowered floor to 0.05
+        sim = awesome_cossim_topn(s1_name_batch, cand_name_vecs.T, top_k_name, 0.05, use_threads=True, n_jobs=4)
         for i in range(sim.shape[0]):
             row = sim.getrow(i)
             if row.nnz > 0:
@@ -145,7 +145,7 @@ def run_blocking_for_country(s1_ids, s1_names, s1_addrs,
     for batch_start in range(0, n_s1, batch_size):
         batch_end = min(batch_start + batch_size, n_s1)
         s1_addr_batch = s1_addr_vecs[batch_start:batch_end]
-        sim = awesome_cossim_topn(s1_addr_batch, cand_addr_vecs.T, top_k_addr, 0.05)
+        sim = awesome_cossim_topn(s1_addr_batch, cand_addr_vecs.T, top_k_addr, 0.05, use_threads=True, n_jobs=4)
         for i in range(sim.shape[0]):
             row = sim.getrow(i)
             if row.nnz > 0:
@@ -175,7 +175,7 @@ def run_blocking_for_country(s1_ids, s1_names, s1_addrs,
     for batch_start in range(0, n_s1, batch_size):
         batch_end = min(batch_start + batch_size, n_s1)
         s1_comb_batch = s1_comb_vecs[batch_start:batch_end]
-        sim = awesome_cossim_topn(s1_comb_batch, cand_comb_vecs.T, 30, 0.05)
+        sim = awesome_cossim_topn(s1_comb_batch, cand_comb_vecs.T, 30, 0.05, use_threads=True, n_jobs=4)
         for i in range(sim.shape[0]):
             row = sim.getrow(i)
             if row.nnz > 0:
