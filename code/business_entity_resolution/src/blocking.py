@@ -161,13 +161,11 @@ def run_blocking_for_country(s1_ids, s1_names, s1_addrs,
         analyzer='char_wb', ngram_range=(3, 4),
         max_features=80000, dtype=np.float32, sublinear_tf=True
     )
-    cand_comb = [f"{n} {a}" for n, a in zip(cand_names, cand_addrs)]
+    cand_comb = (f"{n} {a}" for n, a in zip(cand_names, cand_addrs))
     cand_comb_vecs = comb_vectorizer.fit_transform(cand_comb)
-    del cand_comb
     
-    s1_comb = [f"{n} {a}" for n, a in zip(s1_names, s1_addrs)]
+    s1_comb = (f"{n} {a}" for n, a in zip(s1_names, s1_addrs))
     s1_comb_vecs = comb_vectorizer.transform(s1_comb)
-    del s1_comb
     print(f"  [Comb] TF-IDF shape: {cand_comb_vecs.shape} (took {time.time()-t0:.1f}s)")
 
     print(f"  [Comb] Finding top-30 candidates...")
