@@ -45,14 +45,20 @@ def main():
     assert 0 <= args.worker_id < args.total_workers
 
     # Kaggle test directory path
-    data_dir = '/kaggle/input/datasets/sparshrastogicsv/amazon-ml-2026/test'
+    data_dir = '/kaggle/input/datasets/sparshrastogicsv/amazon-ml-2026'
     if not os.path.exists(data_dir):
         # Fallback to local training dir for testing if test dir doesn't exist locally
         data_dir = 'dataset/test' if os.path.exists('dataset/test') else 'student_resource/dataset/train'
         
-    s1_file = os.path.join(data_dir, 'test_source1.tsv' if 'test' in data_dir else 'train_source1.tsv')
-    s2_file = os.path.join(data_dir, 'test_source2.tsv' if 'test' in data_dir else 'train_source2.tsv')
-    s3_file = os.path.join(data_dir, 'test_source3.tsv' if 'test' in data_dir else 'train_source3.tsv')
+    s1_file = os.path.join(data_dir, 'test_source1.tsv')
+    s2_file = os.path.join(data_dir, 'test_source2.tsv')
+    s3_file = os.path.join(data_dir, 'test_source3.tsv')
+    
+    # If test files aren't in this folder (e.g. testing locally with train data), fallback to train
+    if not os.path.exists(s1_file):
+        s1_file = os.path.join(data_dir, 'train_source1.tsv')
+        s2_file = os.path.join(data_dir, 'train_source2.tsv')
+        s3_file = os.path.join(data_dir, 'train_source3.tsv')
     
     out_file = f'/kaggle/working/candidates_worker_{args.worker_id:03d}.tsv'
     if not os.path.exists('/kaggle/working'):
